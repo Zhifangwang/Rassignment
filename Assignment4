@@ -1,0 +1,60 @@
+rankall <- function(outcome, num = "best") {
+  sum.data <- read.csv("outcome-of-care-measures.csv")
+  ##读入数据
+  state.names.list <- levels(sum.data$State)
+  ##建立用于for循环的state数据集
+  hospital <-c()
+  state <- c()
+  ##建立空数据框的准备
+  outcome.list <- as.list(c("heart attack",
+                              "heart failure",
+                              "pneumonia"))
+                              ##用于outcome输入合法性判断
+  names(outcome.list) <- c("heart attack",
+                             "heart failure",
+                             "pneumonia")
+    
+    if (outcome == outcome.list[outcome]) {
+      rankall <- data.frame(hospital,
+                               state,
+                               stringsAsFactors=FALSE)
+                               ##空数据框
+      names(sum.data)[c(11,17,23)] <- c("heart attack",
+                                        "heart failure",
+                                        "pneumonia")
+                                        ##替换源数据的列名
+      select.data <- sum.data[c("Hospital.Name",
+                                "State",
+                                outcome)]
+                                ##提取目标数据
+      select.data <- select.data[!select.data[3] == "Not Available",]
+      select.data[[3]] <- as.character(select.data[[3]])
+      select.data[[1]] <- as.character(select.data[[1]])
+      select.data[[3]] <- as.numeric(select.data[[3]])
+      select.list <- split(select.data,select.data$State)
+      ##转化数据和按state分割成列表
+      
+      for(i in state.names.list) { 
+        select.state <- as.data.frame(select.list[[i]])
+        ##提示说下一句维度不对（Error in `*tmp*`[[j]] : subscript out of bounds ）
+
+        best.hospital <- select.state[order(select.state[[3]],
+                                                 select.state[[1]]),]
+                                                 ##对医院和死亡率进行排序
+        best.hospital <- best.hospital[complete.cases(best.hospital),]
+        ##去除NA值（我也不知道为什么在这里会产生一些NA值）
+        return.rank <- c()
+        ifelse(num == "best", 
+               return.rank <- 1,
+               ifelse(num == "worst", 
+                      return.rank <- length(best.hospital[,1]), 
+                      return.rank <- as.numeric(num)))
+                      ##rank的确定
+        rankall[i,1:2] <- c(as.character(best.hospital[return.rank,1]),i)
+        ##循环导入所得参数
+      }
+    } else {
+      stop("invalid outcome")
+    }   
+    return(rankall)
+}
